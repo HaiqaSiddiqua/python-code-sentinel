@@ -1,0 +1,5 @@
+{
+  "name": "Python Code Sentinel",
+  "description": "An intelligent tool that automatically detects bugs and generates comprehensive unit tests for your Python code using the power of Gemini. Paste your code, and let the AI enhance its quality and reliability.",
+  "requestFramePermissions": []
+}
