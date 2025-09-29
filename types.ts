@@ -17,3 +17,5 @@ export enum ViewType {
     Bugs,
     Tests,
 }
+
+export type Language = 'python' | 'java';

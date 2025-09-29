@@ -8,7 +8,7 @@ interface TestDisplayProps {
 
 export const TestDisplay: React.FC<TestDisplayProps> = ({ tests }) => {
     return (
-        <div className="p-4 h-full flex flex-col">
+        <div className="h-full flex flex-col p-4">
             <CodeEditor
                 value={tests}
                 readOnly

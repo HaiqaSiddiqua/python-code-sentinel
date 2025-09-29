@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import type { BugReportItem } from '../types';
+import type { BugReportItem, Language } from '../types';
 
 if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable is not set.");
@@ -35,13 +35,14 @@ const bugDetectionSchema = {
     }
 };
 
-export const detectBugs = async (code: string): Promise<BugReportItem[]> => {
-    const systemInstruction = `You are a world-class expert in Python static analysis and code review. Your task is to analyze the provided Python code for bugs, security vulnerabilities, performance issues, and deviations from best practices (PEP 8). Provide a detailed report in a structured JSON format. Identify logical errors, potential runtime exceptions, and unsafe coding patterns.`;
+export const detectBugs = async (code: string, language: Language): Promise<BugReportItem[]> => {
+    const languageName = language === 'python' ? 'Python' : 'Java';
+    const systemInstruction = `You are a world-class expert in ${languageName} static analysis and code review. Your task is to analyze the provided ${languageName} code for bugs, security vulnerabilities, performance issues, and deviations from best practices. Provide a detailed report in a structured JSON format. Identify logical errors, potential runtime exceptions, and unsafe coding patterns.`;
     
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `Please analyze the following Python code:\n\n\`\`\`python\n${code}\n\`\`\``,
+            contents: `Please analyze the following ${languageName} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
             config: {
                 systemInstruction,
                 responseMimeType: 'application/json',
@@ -59,17 +60,20 @@ export const detectBugs = async (code: string): Promise<BugReportItem[]> => {
     }
 };
 
-export const generateTests = async (code: string): Promise<string> => {
-    const systemInstruction = `You are a Senior Software Engineer in Test (SDET) specializing in Python. Your task is to write a comprehensive suite of unit tests for the provided Python code using the built-in 'unittest' library.
+export const generateTests = async (code: string, language: Language): Promise<string> => {
+    const languageName = language === 'python' ? 'Python' : 'Java';
+    const framework = language === 'python' ? "the built-in 'unittest' library" : "the JUnit 5 framework";
+    
+    const systemInstruction = `You are a Senior Software Engineer in Test (SDET) specializing in ${languageName}. Your task is to write a comprehensive suite of unit tests for the provided ${languageName} code using ${framework}.
     - Cover all public functions and methods.
     - Include test cases for normal operation (happy path), edge cases, and error conditions (e.g., invalid input).
-    - Ensure the tests are self-contained and can be run directly.
-    - The output must be a single, complete, and runnable Python script. Do not include any explanatory text outside of the code comments.`;
+    - Ensure the tests are self-contained and can be run directly. For Java, this means providing a complete class with necessary imports and a plausible package name.
+    - The output must be a single, complete, and runnable ${languageName} script. Do not include any explanatory text outside of the code comments.`;
     
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `Please generate unit tests for the following Python code:\n\n\`\`\`python\n${code}\n\`\`\``,
+            contents: `Please generate unit tests for the following ${languageName} code:\n\n\`\`\`${language}\n${code}\n\`\`\``,
             config: {
                 systemInstruction,
             }
@@ -77,7 +81,7 @@ export const generateTests = async (code: string): Promise<string> => {
         
         const rawText = response.text;
         // Clean up markdown code block fences if they exist
-        const cleanedText = rawText.replace(/^```python\n/, '').replace(/\n```$/, '').trim();
+        const cleanedText = rawText.replace(/^```(python|java)\n?/, '').replace(/\n```$/, '').trim();
         return cleanedText;
 
     } catch (error) {
